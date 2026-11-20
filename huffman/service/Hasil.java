@@ -13,6 +13,7 @@ public class Hasil {
     public String[] kode;           // kode tiap byte (null kalau byte tidak muncul)
     public double entropi;          // bit per byte
 
+    // entropi = batas terbaik panjang kode rata-rata
     static double hitungEntropi(long[] f, long n) {
         if (n == 0) return 0;
         double h = 0;
@@ -25,12 +26,14 @@ public class Hasil {
         return h;
     }
 
+    // panjang kode rata-rata = total bit / jumlah byte asli
     public double rataKode() {
         return panjangAsli > 0 ? (double) totalBit / panjangAsli : 0;
     }
 
     @Override
     public String toString() {
+         // persen = ukuran akhir / ukuran awal (saat dekompres bisa lebih dari 100%)
         String rasio = awal > 0 ? String.format("%.1f%%", akhir * 100.0 / awal) : "-";
         return jenis + ": " + awal + " -> " + akhir + " byte (" + rasio + "), " + ms + " ms";
     }

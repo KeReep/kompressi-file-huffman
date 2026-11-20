@@ -15,6 +15,7 @@ public class Main {
         System.out.println("  t <file_asli>                 uji round trip");
     }
 
+    // tampilkan error lalu keluar (kode 1 = gagal)
     private static void gagal(String pesan) {
         System.err.println("ERROR: " + pesan);
         System.exit(1);
@@ -33,6 +34,7 @@ public class Main {
             System.exit(1);
         }
 
+        // mode t butuh 2 argumen (mode + file), mode c dan d butuh 3
         int perlu = mode.equals("t") ? 2 : 3;
         if (args.length < perlu) {
             System.err.println("Argumen kurang untuk mode '" + mode + "'.");
@@ -49,6 +51,7 @@ public class Main {
                 return;
             }
 
+            // getCanonicalFile = path lengkap, biar tetap ketahuan sama walau penulisannya beda
             File b = new File(args[2]);
             if (a.getCanonicalFile().equals(b.getCanonicalFile())) {
                 gagal("File tujuan tidak boleh sama dengan file asal.");
@@ -64,6 +67,7 @@ public class Main {
         }
     }
 
+    // uji: kompres, dekompres, lalu cek hasilnya sama persis dengan file asli
     private static void roundTrip(File a) throws Exception {
         File folder = new File("hasil");
         folder.mkdirs();
@@ -74,6 +78,6 @@ public class Main {
         boolean sama = Arrays.equals(Files.readAllBytes(a.toPath()),
                                      Files.readAllBytes(balik.toPath()));
         System.out.println(sama ? "ROUND TRIP: IDENTIK" : "ROUND TRIP: BEDA (ada bug!)");
-        if (!sama) System.exit(2);
+        if (!sama) System.exit(2); // kode 2 = hasil tidak sama
     }
 }

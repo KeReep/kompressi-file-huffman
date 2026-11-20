@@ -1,6 +1,8 @@
 package huffman.core;
 import java.util.ArrayList;
 
+
+// min heap : nilai terkecil selalu ada di atas (index 0)
 public class Heap<T extends Comparable<T>>{
 
     private ArrayList<T> list;
@@ -8,7 +10,8 @@ public class Heap<T extends Comparable<T>>{
     public Heap(){
         list = new ArrayList<>();
     }
-
+    
+    // tambahin di belakang dulu, lalu naikkan ke poosisi yg benar
     public void insert(T value){
         list.add(value);
         upheap(list.size() - 1);
@@ -16,26 +19,27 @@ public class Heap<T extends Comparable<T>>{
     public int size(){
         return list.size();
     }
-    private void upheap(int index){
 
+    // naikkan elemen selama lebih kecil dari parent
+    private void upheap(int index){
         if(index == 0){
             return;
         }
 
         int p = parent(index);
-
         if(list.get(index).compareTo(list.get(p)) < 0){
             swap(index, p);
             upheap(p);
         }
     }
 
+    // remove nilai terkecil dan rapikan heap
     public T remove() throws Exception{
         if(list.isEmpty()){
             throw new Exception("Removing from empty Heap");
         }
-        T temp = list.get(0);
 
+        T temp = list.get(0);
         T last = list.remove(list.size() - 1);
 
         if(!list.isEmpty()){
@@ -46,17 +50,17 @@ public class Heap<T extends Comparable<T>>{
         return temp;
     }
 
+    // turunkan heap selama lebih kecil dari childnya
     private void downheap(int index) {
-
         int min = index;
         int left = left(index);
         int right = right(index);
 
-        // check is left < min
+        // check jika left < min
         if(left < list.size() && list.get(min).compareTo(list.get(left)) > 0){
             min = left;
         }
-        // check if right < min
+        // check jika right < min
         if(right < list.size() && list.get(min).compareTo(list.get(right)) > 0){
             min = right;
         }
@@ -86,8 +90,8 @@ public class Heap<T extends Comparable<T>>{
         return index * 2 + 2;
     }
 
+    // keluarkan semua elemen dari yg terkecil ke terbesar
     public ArrayList<T> heapSort() throws Exception {
-
         ArrayList<T> data = new ArrayList<>();
 
         while(!list.isEmpty()){

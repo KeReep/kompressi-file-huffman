@@ -8,9 +8,9 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.Arrays;
 
-
-
 public class FileCompressor {
+    // penanda di awal file .huf, buat bedain format file
+    // HUF1 = hasil kompresi Huffman, HUF0 = file asli disimpan apa adanya
     private static final byte[] MAGIC     = {'H', 'U', 'F', '1'};
     private static final byte[] MAGIC_RAW = {'H', 'U', 'F', '0'};
 
@@ -30,12 +30,16 @@ public class FileCompressor {
                 totalBit += freq[i] * kode[i].length();
             }
         }
+        // header = 14 byte tetap (4 penanda + 8 panjang asli + 2 jumlah simbol)
+        // ditambah 9 byte per simbol (1 byte simbol + 8 byte frekuensi)
         long headerHuffman = 14 + 9L * count;
         // Kalau hanya ada 1 jenis byte, dekompresor tidak membaca bit sama sekali,
         // jadi bit data tidak perlu ditulis.
         long bitDitulis = (count == 1) ? 0 : totalBit;
+        // (bit + 7) / 8 = bit dibulatkan ke atas jadi byte
         long ukuranHuffman = headerHuffman + (bitDitulis + 7) / 8;
         long ukuranMentah = 4 + data.length;
+         // kalau Huffman ga lebih kecil (biasanya file kecil, header lebih besar), simpan apa adanya
         boolean mentah = ukuranMentah <= ukuranHuffman;
 
         try (DataOutputStream out = new DataOutputStream(
@@ -45,6 +49,7 @@ public class FileCompressor {
                 out.write(MAGIC_RAW);
                 out.write(data);
             } else {
+                // urutan header harus sama persis dengan urutan baca di decompress
                 out.write(MAGIC);
                 out.writeLong(data.length);
                 out.writeShort(count);
@@ -109,16 +114,19 @@ public class FileCompressor {
                     freq[sym] = din.readLong();
                 }
 
+                // pohon dibangun ulang dari tabel frekuensi, hasilnya sama dengan saat kompresi
                 HuffmanCoder h = new HuffmanCoder(freq);
                 HuffmanCoder.Node root = h.getRoot();
 
                 if (length > 0) {
                     if (root.isLeaf()) {
+                        // cuma 1 jenis byte, tulis byte itu sebanyak panjang asli
                         for (long i = 0; i < length; i++) out.write(root.symbol);
                     } else {
                         BitReader br = new BitReader(din);
                         HuffmanCoder.Node node = root;
                         long written = 0;
+                         // berhenti berdasarkan panjang asli, jadi bit padding di akhir diabaikan
                         while (written < length) {
                             int bit = br.readBit();
                             if (bit == -1) throw new IOException("Data rusak: bit habis terlalu cepat");

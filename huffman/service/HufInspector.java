@@ -14,6 +14,7 @@ public class HufInspector {
 
             byte[] magic = new byte[4];
             in.readFully(magic);
+            // ISO-8859-1 = 1 byte jadi 1 karakter, jadi penanda terbaca apa adanya
             String m = new String(magic, "ISO-8859-1");
             sb.append("Penanda       : ").append(m).append('\n');
 
@@ -34,6 +35,7 @@ public class HufInspector {
                 int sym = in.readUnsignedByte();
                 freq[sym] = in.readLong();
             }
+            // 14 byte tetap + 9 byte per simbol (ukuran header harus sama)
             long headerSize = 4 + 8 + 2 + 9L * count;
 
             sb.append("Panjang asli  : ").append(panjang).append(" byte\n");
@@ -53,6 +55,7 @@ public class HufInspector {
                 }
             }
 
+            // sisa file setelah header = data terkompresi
             long dataByte = f.length() - headerSize;
             sb.append('\n');
             sb.append("Bit data (tanpa padding) : ").append(totalBit).append(" bit\n");
@@ -66,9 +69,11 @@ public class HufInspector {
             for (int i = 0; i < tampil; i++) {
                 int v = in.read();
                 if (v == -1) break;
+                // | 0x100 menambah angka 1 di depan, lalu substring(1) membuangnya
+                // biar nol di depan tetap muncul (jadi selalu 8 digit)
                 String bits = Integer.toBinaryString(v | 0x100).substring(1);
                 sb.append(bits).append(' ');
-                if ((i + 1) % 8 == 0) sb.append('\n');
+                if ((i + 1) % 8 == 0) sb.append('\n'); // ganti baris tiap 8 byte
             }
             sb.append('\n');
         }

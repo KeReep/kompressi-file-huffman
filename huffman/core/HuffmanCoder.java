@@ -6,6 +6,7 @@ public class HuffmanCoder {
         public long freq;
         public Node left, right;
 
+        // nodes pada tree huffman
         public Node (int symbol, long freq) {
             this.symbol = symbol;
             this.freq = freq;
@@ -22,7 +23,7 @@ public class HuffmanCoder {
     private String codes[] = new String[256];
     private Node root;
 
-    // Hitung Frequensi Tiap byte
+    // hitung Frequensi Tiap byte
     static long[] countFreq (byte[] data) {
         long[] f = new long[256];
         for (byte b : data) { 
@@ -35,15 +36,19 @@ public class HuffmanCoder {
         this(countFreq(data));
     }
 
+    // bisa dibuat dari tabel frekuensi saja
+    // jadi dekompresi cukup baca tabel dari header, lalu bangun pohon yang sama lagi
     public HuffmanCoder(long[] freq) throws Exception {
         this.freq = freq.clone();
         Heap<Node> heap = new Heap<>();
 
+        // masukkan tiap byte yg muncul sebagai daun ke heap
         for (int i = 0; i < 256; i++) {
             if (freq[i] > 0) heap.insert(new Node(i, freq[i]));
         }  
-        if (heap.size() == 0) return ; // Check jika kosong
+        if (heap.size() == 0) return ;
 
+        // ambil 2 node dengan nilai terkecil dan gabung jadi 1 node baru
         while (heap.size() > 1) {
             Node a = heap.remove();
             Node b = heap.remove();
@@ -58,6 +63,7 @@ public class HuffmanCoder {
         else buildCodes(root, "");
     }
 
+    // traversal tree dari root ke leaf
     private void buildCodes(Node n, String prefix) {
         if (n.isLeaf()) { codes[n.symbol] = prefix; return; }
         buildCodes(n.left, prefix + "0");
