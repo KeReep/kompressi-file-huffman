@@ -11,8 +11,8 @@ import java.util.Arrays;
 public class FileCompressor {
     // penanda di awal file .huf, buat bedain format file
     // HUF1 = hasil kompresi Huffman, HUF0 = file asli disimpan apa adanya
-    private static final byte[] MAGIC     = {'H', 'U', 'F', '1'};
-    private static final byte[] MAGIC_RAW = {'H', 'U', 'F', '0'};
+    private static final byte[] FORMAT_FILE     = {'H', 'U', 'F', '1'};
+    private static final byte[] FORMAT_FILE_RAW = {'H', 'U', 'F', '0'};
 
     public static Hasil compress(File in, File outFile) throws Exception {
         long start = System.nanoTime();
@@ -33,38 +33,41 @@ public class FileCompressor {
         // header = 14 byte tetap (4 penanda + 8 panjang asli + 2 jumlah simbol)
         // ditambah 9 byte per simbol (1 byte simbol + 8 byte frekuensi)
         long headerHuffman = 14 + 9L * count;
+
         // Kalau hanya ada 1 jenis byte, dekompresor tidak membaca bit sama sekali,
         // jadi bit data tidak perlu ditulis.
         long bitDitulis = (count == 1) ? 0 : totalBit;
+        
         // (bit + 7) / 8 = bit dibulatkan ke atas jadi byte
         long ukuranHuffman = headerHuffman + (bitDitulis + 7) / 8;
         long ukuranMentah = 4 + data.length;
-         // kalau Huffman ga lebih kecil (biasanya file kecil, header lebih besar), simpan apa adanya
+
+         // kalau Huffman tidak lebih kecil (biasanya file kecil, header lebih besar), simpan apa adanya
         boolean mentah = ukuranMentah <= ukuranHuffman;
 
         try (DataOutputStream out = new DataOutputStream(
                 new BufferedOutputStream(new FileOutputStream(outFile)))) {
 
             if (mentah) {
-                out.write(MAGIC_RAW);
+                out.write(FORMAT_FILE_RAW);
                 out.write(data);
             } else {
                 // urutan header harus sama persis dengan urutan baca di decompress
-                out.write(MAGIC);
-                out.writeLong(data.length);
-                out.writeShort(count);
+                out.write(FORMAT_FILE);                 // HUF1
+                out.writeLong(data.length);             // Panjang asli
+                out.writeShort(count);                  // Jumlah simbol
                 for (int i = 0; i < 256; i++) {
                     if (freq[i] > 0) {
-                        out.writeByte(i);
-                        out.writeLong(freq[i]);
+                        out.writeByte(i);               // Simbol
+                        out.writeLong(freq[i]);         // Frequensi
                     }
                 }
                 if (count > 1) {
                     BitWriter bw = new BitWriter(out);
                     for (byte b : data) {
-                        bw.write(h.codeOf(b & 0xFF));
+                        bw.write(h.codeOf(b & 0xFF));   // Kode tiap byte -> bit
                     }
-                    bw.flush();
+                    bw.flush();                         // Sisa byte + padding
                 }
             }
         }
@@ -91,27 +94,29 @@ public class FileCompressor {
         Hasil r = new Hasil();
         r.jenis = "Dekompres";
 
-        try (DataInputStream din = new DataInputStream(
+        try (DataInputStream dataIn = new DataInputStream(
                 new BufferedInputStream(new FileInputStream(in)));
              BufferedOutputStream out = new BufferedOutputStream(
                 new FileOutputStream(outFile))) {
 
-            byte[] magic = new byte[4];
-            din.readFully(magic);
+            byte[] format = new byte[4];
+            dataIn.readFully(format);
 
-            if (Arrays.equals(magic, MAGIC_RAW)) {
-                din.transferTo(out);
+            if (Arrays.equals(format, FORMAT_FILE_RAW)) {
+                dataIn.transferTo(out);
                 r.mentah = true;
                 r.mode = "HUF0 (mentah)";
                 r.headerByte = 4;
 
-            } else if (Arrays.equals(magic, MAGIC)) {
-                long length = din.readLong();
-                int count = din.readShort();
+            } else if (Arrays.equals(format, FORMAT_FILE)) {
+                long length = dataIn.readLong();
+                int count = dataIn.readShort();
                 long[] freq = new long[256];
+
+                // bangun ulang tabel freq
                 for (int i = 0; i < count; i++) {
-                    int sym = din.readUnsignedByte();
-                    freq[sym] = din.readLong();
+                    int sym = dataIn.readUnsignedByte();
+                    freq[sym] = dataIn.readLong();
                 }
 
                 // pohon dibangun ulang dari tabel frekuensi, hasilnya sama dengan saat kompresi
@@ -123,7 +128,7 @@ public class FileCompressor {
                         // cuma 1 jenis byte, tulis byte itu sebanyak panjang asli
                         for (long i = 0; i < length; i++) out.write(root.symbol);
                     } else {
-                        BitReader br = new BitReader(din);
+                        BitReader br = new BitReader(dataIn);
                         HuffmanCoder.Node node = root;
                         long written = 0;
                          // berhenti berdasarkan panjang asli, jadi bit padding di akhir diabaikan
@@ -148,6 +153,7 @@ public class FileCompressor {
                         totalBit += freq[i] * kode[i].length();
                     }
                 }
+                
                 r.mode = "HUF1 (Huffman)";
                 r.freq = freq;
                 r.kode = kode;

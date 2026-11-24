@@ -16,6 +16,7 @@ public class Heap<T extends Comparable<T>>{
         list.add(value);
         upheap(list.size() - 1);
     }
+
     public int size(){
         return list.size();
     }
@@ -44,7 +45,6 @@ public class Heap<T extends Comparable<T>>{
 
         if(!list.isEmpty()){
             list.set(0, last);
-
             downheap(0);
         }
         return temp;
@@ -67,7 +67,6 @@ public class Heap<T extends Comparable<T>>{
 
         if(min != index){
             swap(min, index);
-
             downheap(min);
         }
     }

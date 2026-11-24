@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutionException;
 
 public class App extends JFrame {
 
-    // palet warna
+    // ---------- Palet Warna ----------
     private static final Color BG_MAIN      = new Color(0xF4F4F5);
     private static final Color BG_CARD      = Color.WHITE;
     private static final Color BORDER_COLOR = new Color(0xD4D4D8);

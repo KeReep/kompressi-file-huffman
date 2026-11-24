@@ -36,7 +36,7 @@ public class HufInspector {
                 freq[sym] = in.readLong();
             }
             // 14 byte tetap + 9 byte per simbol (ukuran header harus sama)
-            long headerSize = 4 + 8 + 2 + 9L * count;
+            long headerSize = 14 + 9L * count;
 
             sb.append("Panjang asli  : ").append(panjang).append(" byte\n");
             sb.append("Jumlah simbol : ").append(count).append("\n\n");

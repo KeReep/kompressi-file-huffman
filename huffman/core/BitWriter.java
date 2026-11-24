@@ -23,7 +23,7 @@ public class BitWriter {
     }
 
     // handle bit yg belum 8 bit dengan menambahkan padding 0
-    public void flush ()  throws IOException {
+    public void flush () throws IOException {
         if (n > 0) {
             out.write(curr << (8 - n));
             curr = 0;
